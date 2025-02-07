@@ -11,7 +11,7 @@ text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=20
 embedding_function = OpenAIEmbeddings()
 
 # Initialize Chroma vector store
-vectorstore = Chroma(persist_directory="./chroma_db", embedding_function=embedding_function)
+vectorstore = Chroma(persist_directory="./storage/chroma_db", embedding_function=embedding_function)
 
 def load_and_split_document(file_path: str) -> List[Document]:
     if file_path.endswith('.pdf'):

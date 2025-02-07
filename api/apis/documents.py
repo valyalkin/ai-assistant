@@ -1,43 +1,21 @@
 import os
 import shutil
-import uuid
 
-from fastapi import FastAPI, File, UploadFile, HTTPException
+from fastapi import File, UploadFile, HTTPException, APIRouter
 import logging
 
 from chroma.chroma import index_document_to_chroma, delete_doc_from_chroma
-from db.db import get_chat_history, insert_application_logs, insert_document_record, delete_document_record, \
+from db.db import insert_document_record, delete_document_record, \
     get_all_documents
-from model.pydantic_models import QueryResponse, QueryInput, DocumentInfo, DeleteFileRequest
-from chains.langchain_utils import get_rag_chain
-# Set up logging
-logging.basicConfig(filename='app.log', level=logging.INFO)
+from model.pydantic_models import DocumentInfo, DeleteFileRequest
 
-app = FastAPI()
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+router = APIRouter()
 
-
-@app.post("/chat", response_model=QueryResponse)
-def chat(query_input: QueryInput):
-    session_id = query_input.session_id or str(uuid.uuid4())
-    logging.info(f"Session ID: {session_id}, User Query: {query_input.question}, Model: {query_input.model.value}")
-
-    chat_history = get_chat_history(session_id)
-    rag_chain = get_rag_chain(query_input.model.value)
-    answer = rag_chain.invoke({
-        "input": query_input.question,
-        "chat_history": chat_history
-    })['answer']
-
-    insert_application_logs(session_id, query_input.question, answer, query_input.model.value)
-    logging.info(f"Session ID: {session_id}, AI Response: {answer}")
-    return QueryResponse(answer=answer, session_id=session_id, model=query_input.model)
-
-@app.post("/upload-doc")
+@router.post("/upload-doc")
 def upload_and_index_document(file: UploadFile = File(...)):
     allowed_extensions = ['.pdf', '.docx', '.html']
     file_extension = os.path.splitext(file.filename)[1].lower()
@@ -64,11 +42,11 @@ def upload_and_index_document(file: UploadFile = File(...)):
         if os.path.exists(temp_file_path):
             os.remove(temp_file_path)
 
-@app.get("/list-docs", response_model=list[DocumentInfo])
+@router.get("/list-docs", response_model=list[DocumentInfo])
 def list_documents():
     return get_all_documents()
 
-@app.post("/delete-doc")
+@router.post("/delete-doc")
 def delete_document(request: DeleteFileRequest):
     chroma_delete_success = delete_doc_from_chroma(request.file_id)
 
@@ -80,3 +58,6 @@ def delete_document(request: DeleteFileRequest):
             return {"error": f"Deleted from Chroma but failed to delete document with file_id {request.file_id} from the database."}
     else:
         return {"error": f"Failed to delete document with file_id {request.file_id} from Chroma."}
+
+
+

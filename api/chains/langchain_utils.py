@@ -4,8 +4,8 @@ from langchain.chains.retrieval import create_retrieval_chain
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from chroma.chroma import vectorstore
 
+from chroma.chroma import vectorstore
 
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
