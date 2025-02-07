@@ -1,12 +1,11 @@
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains.history_aware_retriever import create_history_aware_retriever
+from langchain.chains.retrieval import create_retrieval_chain
 from langchain_openai import ChatOpenAI
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate, MessagesPlaceholder
-from langchain.chains import create_history_aware_retriever, create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
-from typing import List
-from langchain_core.documents import Document
-import os
-from chroma_utils import vectorstore
+from chroma.chroma import vectorstore
+
 
 retriever = vectorstore.as_retriever(search_kwargs={"k": 2})
 
